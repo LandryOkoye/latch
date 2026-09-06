@@ -1,4 +1,5 @@
 .venv/
+BUILD_PLAN.md
 __pycache__/
 *.pyc
 *.egg-info/
