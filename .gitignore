@@ -1,5 +1,6 @@
 .venv/
 BUILD_PLAN.md
+THESIS.md
 __pycache__/
 *.pyc
 *.egg-info/
