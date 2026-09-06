@@ -1,0 +1,9 @@
+# Deployment deps for AgentCore only. Do NOT add Streamlit or reviewer-only deps here.
+strands-agents
+strands-agents-tools
+boto3
+gspread
+google-auth
+python-telegram-bot
+python-dotenv
+pydantic>=2

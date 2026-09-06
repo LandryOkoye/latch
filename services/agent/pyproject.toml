@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latch-agent"
+version = "0.1.0"
+description = "Latch agent runtime: Strands agents, tools, ingestion adapters, scheduler. The only deployable unit (AgentCore)."
+requires-python = ">=3.10"
+dependencies = [
+    "latch-core",
+    "strands-agents",
+    "strands-agents-tools",
+    "boto3",
+    "gspread",
+    "google-auth",
+    "python-telegram-bot",
+    "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
