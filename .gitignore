@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.env
+latch.db
+latch.db-wal
+latch.db-shm
+.streamlit/secrets.toml
+*.log
+.DS_Store

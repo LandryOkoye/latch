@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latch-core"
+version = "0.1.0"
+description = "Shared domain layer for Latch: models, ledger, priority scoring. No I/O beyond SQLite, no agents."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2",
+    "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
