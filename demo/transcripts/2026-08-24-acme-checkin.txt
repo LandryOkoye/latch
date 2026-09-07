@@ -1,0 +1,18 @@
+MEETING_ID: 2026-08-24-acme-checkin
+TITLE: Acme Outfitters Website Redesign — Two-Week Check-in
+OCCURRED_AT: 2026-08-24T10:00:00
+PARTICIPANTS:
+- Dana Kim <dana@fieldstonedigital.com>
+- Marcus Lee <marcus@crestlineprint.com>
+- Jordan Alvarez <jordan@brightpathdev.com>
+- Priya Shah <priya@acmeoutfitters.com>
+---
+[00:00] Dana Kim: Thanks for jumping on. Quick check-in before we get too deep into the build. Jordan, how's staging coming along?
+[00:12] Jordan Alvarez: Good progress. I'll have the new staging environment ready by this Friday, the 28th, with login details sent over the same day.
+[00:28] Dana Kim: Perfect. Priya, did the proofs from Marcus's team arrive okay?
+[00:36] Priya Shah: Haven't seen them yet, actually, but I'm sure they're on the way.
+[00:44] Dana Kim: I'll keep an eye on that. Priya, separately — where are we on the additional budget ask for the extra content pages?
+[00:58] Priya Shah: Still waiting to hear back internally. We'll circle back on that once finance has looked at it.
+[01:10] Dana Kim: No problem, whenever you have an answer. Anything else before we wrap?
+[01:18] Marcus Lee: Nothing from me, all good on our end.
+[01:22] Dana Kim: Great, thanks all.

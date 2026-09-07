@@ -1,0 +1,19 @@
+MEETING_ID: 2026-08-10-acme-kickoff
+TITLE: Acme Outfitters Website Redesign — Kickoff
+OCCURRED_AT: 2026-08-10T10:00:00
+PARTICIPANTS:
+- Dana Kim <dana@fieldstonedigital.com>
+- Marcus Lee <marcus@crestlineprint.com>
+- Jordan Alvarez <jordan@brightpathdev.com>
+- Priya Shah <priya@acmeoutfitters.com>
+---
+[00:00] Dana Kim: Thanks everyone for hopping on. This is the kickoff for the Acme site redesign — I'll keep it quick since I know we're all juggling a few things. Priya, anything from your side before we dive in?
+[00:14] Priya Shah: Just that leadership is excited to see progress. We've got a board update in a few weeks, so anything visual helps.
+[00:26] Dana Kim: Perfect, that's good context. Marcus, where are we on the print side — the physical brand assets and mockups?
+[00:38] Marcus Lee: We're in good shape. We'll get the printed proofs over to you by Friday the 21st, so you'll have physical copies in hand before your board prep.
+[00:55] Dana Kim: Great, that timeline works well. Jordan, what's the plan on your end for hosting and staging?
+[01:10] Jordan Alvarez: We're spinning up the environment now. I don't have a hard date yet — want to make sure it's stable before I hand over access. I'll come back to you on timing once I've scoped it properly.
+[01:32] Priya Shah: One more thing on my list — not urgent at all, but we should probably think about doing a full accessibility audit on the new site at some point. Just flagging it so it doesn't get lost.
+[01:50] Dana Kim: Noted, we'll keep that on the radar for later in the project. Okay — last thing from me. Priya, I'll get you the revised project timeline by Monday the 17th so you've got it ahead of your Tuesday leadership sync.
+[02:08] Priya Shah: That's perfect, thank you.
+[02:12] Dana Kim: Great, thanks everyone — talk soon.

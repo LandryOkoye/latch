@@ -1,0 +1,18 @@
+MEETING_ID: 2026-09-01-acme-status-sync
+TITLE: Acme Outfitters Website Redesign — Status Sync
+OCCURRED_AT: 2026-09-01T10:00:00
+PARTICIPANTS:
+- Dana Kim <dana@fieldstonedigital.com>
+- Jordan Alvarez <jordan@brightpathdev.com>
+- Priya Shah <priya@acmeoutfitters.com>
+---
+[00:00] Dana Kim: Thanks for hopping on — Marcus couldn't make it today, so it's just the three of us. Priya, quick one first — did those printed proofs ever show up?
+[00:13] Priya Shah: No, still nothing on our end. It's been a couple weeks now.
+[00:20] Dana Kim: Okay, that's on me to chase — I'll follow up with Marcus about the proofs directly and get you an update by tomorrow.
+[00:34] Priya Shah: Appreciate it, no rush beyond that.
+[00:39] Dana Kim: Jordan, how did the staging handoff go?
+[00:45] Jordan Alvarez: That went out fine last week. Separately, Priya flagged a performance issue on the homepage yesterday — I'll take a look at that and let you both know what I find.
+[01:05] Priya Shah: Thanks, it was pretty noticeable on mobile.
+[01:12] Dana Kim: Good catch. One more thing before we go — totally future-looking, but we might want to revisit the color palette at some point once the redesign's live and we've got real feedback. Nothing to action now.
+[01:30] Priya Shah: Agreed, let's not worry about that yet.
+[01:34] Dana Kim: Sounds good — thanks everyone, talk soon.
