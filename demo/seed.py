@@ -260,8 +260,11 @@ def seed() -> list[Loop]:
     return loops
 
 
-def _backdated_events(loop: Loop) -> None:
-    """Log a plausible event trail so the loop-detail timeline isn't empty."""
+def _backdated_events(loop: Loop, deferral_reply_text: str | None = None) -> None:
+    """Log a plausible event trail so the loop-detail timeline isn't empty. When
+    deferral_reply_text is given, the DEFERRED event carries it as reply_text
+    (evidence_span = the same text) so the worklist's evidence-highlighting
+    toggle has something real to show without needing a live agent call."""
     ledger.record_event(loop.id, LoopEventType.CREATED, occurred_at=loop.created_at, detail=f"loop created: {loop.promise!r}")
 
     span = max((NOW - loop.created_at).total_seconds(), 1)
@@ -272,7 +275,11 @@ def _backdated_events(loop: Loop) -> None:
 
     for i in range(loop.deferral_count):
         occurred_at = loop.created_at + timedelta(seconds=span * (i + 1) / (loop.deferral_count + 1.5))
-        ledger.record_event(loop.id, LoopEventType.DEFERRED, occurred_at=occurred_at, detail="counterparty asked for more time")
+        ledger.record_event(
+            loop.id, LoopEventType.DEFERRED, occurred_at=occurred_at,
+            detail="counterparty asked for more time",
+            reply_text=deferral_reply_text, evidence_span=deferral_reply_text,
+        )
 
     if loop.status == LoopStatus.ESCALATED_TO_HUMAN:
         ledger.record_event(loop.id, LoopEventType.ESCALATED, occurred_at=NOW - timedelta(hours=6), detail="repeated touches with no resolution")
@@ -290,7 +297,12 @@ def main() -> None:
         # create_loop already logs its own CREATED event with occurred_at=now;
         # replace it so _backdated_events can lay down the real backdated trail.
         ledger.delete_events(loop.id)
-        _backdated_events(loop)
+
+        # For a loop with a child (i.e. it was DEFERRED), the child's
+        # source_quote *is* what the counterparty's reply said — reuse it as
+        # the parent's DEFERRED event reply_text/evidence_span.
+        child = next((l for l in loops if l.parent_id == loop.id), None)
+        _backdated_events(loop, deferral_reply_text=child.source_quote if child else None)
 
     print(f"Seeded {len(loops)} loops across {len({loop.counterparty_org for loop in loops})} counterparties.")
 
