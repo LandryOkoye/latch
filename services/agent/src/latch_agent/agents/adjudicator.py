@@ -1,8 +1,13 @@
+import uuid
+from datetime import datetime, timedelta
+
 from strands import Agent
 from strands.models import BedrockModel
 
-from latch_core import config
-from latch_core.models import Loop, Verdict
+from latch_core import config, ledger
+from latch_core.models import Loop, LoopEventType, LoopStatus, Verdict, VerdictType, WindowSource
+
+from latch_agent.tools import sheet_tools
 
 _SYSTEM_PROMPT = """You are the Adjudicator: you read a reply to a follow-up chase
 about an overdue commitment ("loop") and decide what the reply actually means.
@@ -50,3 +55,112 @@ def adjudicate(loop: Loop, reply_text: str) -> Verdict:
     )
 
     return agent.structured_output(Verdict, prompt)
+
+
+_DEFAULT_DEFERRAL_DAYS = 5
+
+
+def _history_summary(loop: Loop) -> str:
+    parts = []
+    if loop.touch_count:
+        channels = "/".join(loop.channels_tried) or "email"
+        plural = "s" if loop.touch_count != 1 else ""
+        parts.append(f"we've followed up {loop.touch_count} time{plural} by {channels}")
+    if loop.deferral_count:
+        plural = "s" if loop.deferral_count != 1 else ""
+        parts.append(f"it's been deferred {loop.deferral_count} time{plural} already")
+    return "; ".join(parts) if parts else "this hasn't been followed up on yet"
+
+
+def _draft_handoff_message(loop: Loop, new_owner_name: str) -> str:
+    """A history-carrying message for a TRANSFERRED loop's new owner, so they
+    don't start from zero."""
+    return (
+        f"Hi {new_owner_name},\n\n"
+        f"This was originally with {loop.owner_name}, who mentioned you're picking it up:\n\n"
+        f'"{loop.source_quote}"\n\n'
+        f"This was expected by {loop.due_at:%B %d}. Since then, {_history_summary(loop)}.\n\n"
+        f"Could you take it from here?"
+    )
+
+
+def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
+    """Carry out the taxonomy's required action for a verdict (BUILD_PLAN.md §5).
+    This is mechanical, not another judgment call — the Adjudicator already
+    decided what the reply meant; this makes the ledger reflect it."""
+    loop = ledger.get_loop(loop_id)
+    if loop is None:
+        raise ValueError(f"unknown loop {loop_id}")
+
+    if verdict.verdict == VerdictType.CLOSED:
+        record = sheet_tools.check_sheet_record(loop_id)
+        if record:
+            ledger.update_loop(loop_id, status=LoopStatus.CLOSED_VERIFIED)
+            ledger.record_event(
+                loop_id, LoopEventType.CLOSED_VERIFIED,
+                evidence_span=verdict.evidence_span, detail="verified against system of record",
+            )
+        else:
+            ledger.update_loop(loop_id, status=LoopStatus.CLOSED_CLAIMED)
+            ledger.record_event(
+                loop_id, LoopEventType.CLOSED_CLAIMED,
+                evidence_span=verdict.evidence_span,
+                detail="claimed but not found in system of record; flagged for human review",
+            )
+
+    elif verdict.verdict == VerdictType.DEFERRED:
+        new_due_at = verdict.new_due_at or (datetime.now() + timedelta(days=_DEFAULT_DEFERRAL_DAYS))
+        child = ledger.create_loop(
+            Loop(
+                id=str(uuid.uuid4()),
+                parent_id=loop.id,
+                promise=verdict.new_commitment or loop.promise,
+                source_quote=verdict.evidence_span,
+                source_meeting_id=None,
+                owner_name=loop.owner_name,
+                owner_email=loop.owner_email,
+                counterparty_org=loop.counterparty_org,
+                due_at=new_due_at,
+                window_source=WindowSource.STATED if verdict.new_due_at else WindowSource.INFERRED,
+                closure_criterion=loop.closure_criterion,
+                stakes=loop.stakes,
+                created_at=datetime.now(),
+            )
+        )
+        # Not LoopStatus.OPEN: that would leave the parent's now-superseded due_at
+        # eligible for the scheduler to pursue it a second time alongside the
+        # child. AWAITING_REPLY keeps it "not closed" (conceptually still open,
+        # per §5) while the child carries the active thread.
+        ledger.update_loop(loop_id, deferral_count=loop.deferral_count + 1, status=LoopStatus.AWAITING_REPLY)
+        ledger.record_event(
+            loop_id, LoopEventType.DEFERRED,
+            evidence_span=verdict.evidence_span, detail=f"deferred; child loop {child.id} created",
+        )
+
+    elif verdict.verdict == VerdictType.TRANSFERRED:
+        new_owner_name = verdict.new_owner_name or loop.owner_name
+        new_owner_email = verdict.new_owner_email or loop.owner_email
+        handoff_message = _draft_handoff_message(loop, new_owner_name)
+        ledger.update_loop(loop_id, owner_name=new_owner_name, owner_email=new_owner_email)
+        ledger.record_event(
+            loop_id, LoopEventType.TRANSFERRED,
+            evidence_span=verdict.evidence_span,
+            detail=f"handoff to {new_owner_name} <{new_owner_email}>: {handoff_message}",
+        )
+
+    elif verdict.verdict == VerdictType.DISPUTED:
+        ledger.update_loop(loop_id, status=LoopStatus.ESCALATED_TO_HUMAN)
+        ledger.record_event(
+            loop_id, LoopEventType.DISPUTED,
+            evidence_span=verdict.evidence_span, detail="counterparty disputes the premise; escalated",
+        )
+
+    elif verdict.verdict == VerdictType.AMBIGUOUS:
+        ledger.update_loop(loop_id, status=LoopStatus.ESCALATED_TO_HUMAN)
+        ledger.record_event(
+            loop_id, LoopEventType.ESCALATED,
+            evidence_span=verdict.evidence_span,
+            detail=f"ambiguous reply (confidence={verdict.confidence}); escalated for human review",
+        )
+
+    return ledger.get_loop(loop_id)
