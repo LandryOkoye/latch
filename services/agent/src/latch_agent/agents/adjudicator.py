@@ -84,10 +84,12 @@ def _draft_handoff_message(loop: Loop, new_owner_name: str) -> str:
     )
 
 
-def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
+def apply_verdict(loop_id: str, reply_text: str, verdict: Verdict) -> Loop:
     """Carry out the taxonomy's required action for a verdict (BUILD_PLAN.md §5).
     This is mechanical, not another judgment call — the Adjudicator already
-    decided what the reply meant; this makes the ledger reflect it."""
+    decided what the reply meant; this makes the ledger reflect it. The full
+    reply_text is stored on the event so the UI can highlight evidence_span
+    within its original context."""
     loop = ledger.get_loop(loop_id)
     if loop is None:
         raise ValueError(f"unknown loop {loop_id}")
@@ -98,13 +100,14 @@ def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
             ledger.update_loop(loop_id, status=LoopStatus.CLOSED_VERIFIED)
             ledger.record_event(
                 loop_id, LoopEventType.CLOSED_VERIFIED,
-                evidence_span=verdict.evidence_span, detail="verified against system of record",
+                evidence_span=verdict.evidence_span, reply_text=reply_text,
+                detail="verified against system of record",
             )
         else:
             ledger.update_loop(loop_id, status=LoopStatus.CLOSED_CLAIMED)
             ledger.record_event(
                 loop_id, LoopEventType.CLOSED_CLAIMED,
-                evidence_span=verdict.evidence_span,
+                evidence_span=verdict.evidence_span, reply_text=reply_text,
                 detail="claimed but not found in system of record; flagged for human review",
             )
 
@@ -134,7 +137,8 @@ def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
         ledger.update_loop(loop_id, deferral_count=loop.deferral_count + 1, status=LoopStatus.AWAITING_REPLY)
         ledger.record_event(
             loop_id, LoopEventType.DEFERRED,
-            evidence_span=verdict.evidence_span, detail=f"deferred; child loop {child.id} created",
+            evidence_span=verdict.evidence_span, reply_text=reply_text,
+            detail=f"deferred; child loop {child.id} created",
         )
 
     elif verdict.verdict == VerdictType.TRANSFERRED:
@@ -144,7 +148,7 @@ def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
         ledger.update_loop(loop_id, owner_name=new_owner_name, owner_email=new_owner_email)
         ledger.record_event(
             loop_id, LoopEventType.TRANSFERRED,
-            evidence_span=verdict.evidence_span,
+            evidence_span=verdict.evidence_span, reply_text=reply_text,
             detail=f"handoff to {new_owner_name} <{new_owner_email}>: {handoff_message}",
         )
 
@@ -152,14 +156,15 @@ def apply_verdict(loop_id: str, verdict: Verdict) -> Loop:
         ledger.update_loop(loop_id, status=LoopStatus.ESCALATED_TO_HUMAN)
         ledger.record_event(
             loop_id, LoopEventType.DISPUTED,
-            evidence_span=verdict.evidence_span, detail="counterparty disputes the premise; escalated",
+            evidence_span=verdict.evidence_span, reply_text=reply_text,
+            detail="counterparty disputes the premise; escalated",
         )
 
     elif verdict.verdict == VerdictType.AMBIGUOUS:
         ledger.update_loop(loop_id, status=LoopStatus.ESCALATED_TO_HUMAN)
         ledger.record_event(
             loop_id, LoopEventType.ESCALATED,
-            evidence_span=verdict.evidence_span,
+            evidence_span=verdict.evidence_span, reply_text=reply_text,
             detail=f"ambiguous reply (confidence={verdict.confidence}); escalated for human review",
         )
 
