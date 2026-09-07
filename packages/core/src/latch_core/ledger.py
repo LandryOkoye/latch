@@ -66,6 +66,20 @@ def init_db() -> None:
         conn.executescript(_SCHEMA)
 
 
+def reset_db() -> None:
+    """Delete all loops and events. Used by the demo seed script."""
+    with _connect() as conn:
+        conn.execute("DELETE FROM events")
+        conn.execute("DELETE FROM loops")
+
+
+def delete_events(loop_id: str) -> None:
+    """Delete all events for a loop. Used by the demo seed script to replace the
+    auto-recorded CREATED event with a backdated history."""
+    with _connect() as conn:
+        conn.execute("DELETE FROM events WHERE loop_id = ?", (loop_id,))
+
+
 def _row_to_loop(row: sqlite3.Row, events: list[LoopEvent] | None = None) -> Loop:
     return Loop(
         id=row["id"],
