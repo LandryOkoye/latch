@@ -1,8 +1,16 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# packages/core/src/latch_core/config.py -> repo root is 4 parents up. Anchoring
+# here (rather than leaving a relative path tied to the caller's cwd) matters
+# because apps/reviewer is launched with cwd=apps/reviewer (so its own
+# .streamlit/config.toml is discovered) while services/agent and the Makefile's
+# other targets run from the repo root — both must resolve to the same db file.
+_REPO_ROOT = Path(__file__).resolve().parents[4]
 
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-pro-v1:0")
@@ -22,4 +30,5 @@ TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 ATTENDEE_API_KEY = os.environ.get("ATTENDEE_API_KEY")
 
-DB_PATH = os.environ.get("LATCH_DB_PATH", "./latch.db")
+_db_path_raw = os.environ.get("LATCH_DB_PATH", "./latch.db")
+DB_PATH = _db_path_raw if os.path.isabs(_db_path_raw) else str(_REPO_ROOT / _db_path_raw)

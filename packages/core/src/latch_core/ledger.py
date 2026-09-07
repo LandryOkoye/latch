@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS events (
     channel TEXT,
     detail TEXT NOT NULL DEFAULT '',
     evidence_span TEXT,
-    message_id TEXT
+    message_id TEXT,
+    reply_text TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_loops_parent ON loops(parent_id);
@@ -115,6 +116,7 @@ def _row_to_event(row: sqlite3.Row) -> LoopEvent:
         detail=row["detail"],
         evidence_span=row["evidence_span"],
         message_id=row["message_id"],
+        reply_text=row["reply_text"],
     )
 
 
@@ -209,6 +211,7 @@ def record_event(
     detail: str = "",
     evidence_span: str | None = None,
     message_id: str | None = None,
+    reply_text: str | None = None,
     occurred_at: datetime | None = None,
 ) -> LoopEvent:
     event = LoopEvent(
@@ -220,14 +223,15 @@ def record_event(
         detail=detail,
         evidence_span=evidence_span,
         message_id=message_id,
+        reply_text=reply_text,
     )
     with _connect() as conn:
         conn.execute(
-            "INSERT INTO events (id, loop_id, event_type, occurred_at, channel, detail, evidence_span, message_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO events (id, loop_id, event_type, occurred_at, channel, detail, evidence_span, message_id, reply_text) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 event.id, event.loop_id, event.event_type.value, event.occurred_at.isoformat(),
-                event.channel, event.detail, event.evidence_span, event.message_id,
+                event.channel, event.detail, event.evidence_span, event.message_id, event.reply_text,
             ),
         )
     return event

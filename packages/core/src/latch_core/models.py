@@ -69,6 +69,7 @@ class LoopEvent(BaseModel):
     detail: str = ""
     evidence_span: str | None = None
     message_id: str | None = None
+    reply_text: str | None = None
 
 
 class Verdict(BaseModel):
