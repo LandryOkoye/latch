@@ -16,6 +16,7 @@ dependencies = [
     "google-auth",
     "python-telegram-bot",
     "python-dotenv",
+    "bedrock-agentcore",
 ]
 
 [tool.setuptools.packages.find]

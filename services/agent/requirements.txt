@@ -7,3 +7,4 @@ google-auth
 python-telegram-bot
 python-dotenv
 pydantic>=2
+bedrock-agentcore
