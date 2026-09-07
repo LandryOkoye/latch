@@ -23,8 +23,8 @@ run-agent:  ## start the scheduler tick loop
 run-agent-fast:  ## same, compressed clock for recording
 	$(PY) -m latch_agent.scheduler --fast
 
-run-ui:  ## streamlit run apps/reviewer
-	$(VENV)/bin/streamlit run apps/reviewer/src/latch_reviewer/app.py
+run-ui:  ## streamlit run apps/reviewer (cwd'd there so its .streamlit/config.toml theme is picked up)
+	cd apps/reviewer && $(CURDIR)/$(VENV)/bin/streamlit run src/latch_reviewer/app.py
 
 test:  ## run pytest
 	$(PY) -m pytest tests/
