@@ -9,6 +9,7 @@ install:  ## one-time setup: venv + editable installs
 	$(PY) -m pip install -e packages/core
 	$(PY) -m pip install -e services/agent
 	$(PY) -m pip install -e apps/reviewer
+	$(PY) -m pip install pytest
 
 seed:  ## reset db and load pre-aged demo loops
 	$(PY) demo/seed.py
