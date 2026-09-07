@@ -1,11 +1,14 @@
 import email
 import imaplib
+import re
 import smtplib
 import time
 from email.message import EmailMessage
 from email.utils import make_msgid
 
-from latch_core import config
+from latch_core import config, ledger
+
+_TOKEN_RE = re.compile(r"\[LATCH-([0-9a-f]{8})\]")
 
 
 def send_email(to: str, subject: str, body: str, in_reply_to: str | None = None) -> str:
@@ -54,6 +57,7 @@ def _fetch_and_parse(imap: imaplib.IMAP4_SSL, msg_id: bytes) -> dict:
     return {
         "message_id": parsed.get("Message-ID"),
         "in_reply_to": parsed.get("In-Reply-To"),
+        "references": parsed.get("References"),
         "from": parsed.get("From"),
         "to": parsed.get("To"),
         "subject": parsed.get("Subject"),
@@ -69,4 +73,26 @@ def wait_for_email(subject_contains: str, timeout: float = 60.0, poll_interval: 
             if subject_contains in (msg["subject"] or ""):
                 return msg
         time.sleep(poll_interval)
+    return None
+
+
+def find_loop_id_for_reply(msg: dict) -> str | None:
+    """Match an inbound email to the loop it's replying to. Tries Message-ID
+    threading (In-Reply-To / References) first, then falls back to the
+    [LATCH-xxxxxxxx] subject token — this is what still works when a client
+    (e.g. many phone mail apps) mangles or drops the threading headers."""
+    for header_name in ("in_reply_to", "references"):
+        header_value = msg.get(header_name) or ""
+        for candidate_id in header_value.split():
+            event = ledger.find_event_by_message_id(candidate_id.strip())
+            if event:
+                return event.loop_id
+
+    match = _TOKEN_RE.search(msg.get("subject") or "")
+    if match:
+        prefix = match.group(1)
+        for loop in ledger.list_loops():
+            if loop.id.startswith(prefix):
+                return loop.id
+
     return None

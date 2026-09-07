@@ -68,6 +68,7 @@ class LoopEvent(BaseModel):
     channel: str | None = None
     detail: str = ""
     evidence_span: str | None = None
+    message_id: str | None = None
 
 
 class Verdict(BaseModel):

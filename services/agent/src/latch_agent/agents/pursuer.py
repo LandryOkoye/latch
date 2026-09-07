@@ -80,8 +80,11 @@ def send_email(loop_id: str, subject: str, body: str) -> str:
     loop = ledger.get_loop(loop_id)
     if loop is None:
         raise ValueError(f"unknown loop {loop_id}")
+    token = f"[LATCH-{loop_id[:8]}]"
+    if token not in subject:
+        subject = f"{subject} {token}"
     message_id = email_tools.send_email(to=loop.owner_email, subject=subject, body=body)
-    ledger_tools.record_touch(loop_id, channel="email", detail=f"sent: {subject}")
+    ledger_tools.record_touch(loop_id, channel="email", detail=f"sent: {subject}", message_id=message_id)
     return message_id
 
 

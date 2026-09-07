@@ -37,12 +37,14 @@ CREATE TABLE IF NOT EXISTS events (
     occurred_at TEXT NOT NULL,
     channel TEXT,
     detail TEXT NOT NULL DEFAULT '',
-    evidence_span TEXT
+    evidence_span TEXT,
+    message_id TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_loops_parent ON loops(parent_id);
 CREATE INDEX IF NOT EXISTS idx_loops_status_due ON loops(status, due_at);
 CREATE INDEX IF NOT EXISTS idx_events_loop ON events(loop_id);
+CREATE INDEX IF NOT EXISTS idx_events_message_id ON events(message_id);
 """
 
 _UPDATABLE_FIELDS = set(Loop.model_fields) - {"id", "events"}
@@ -112,6 +114,7 @@ def _row_to_event(row: sqlite3.Row) -> LoopEvent:
         channel=row["channel"],
         detail=row["detail"],
         evidence_span=row["evidence_span"],
+        message_id=row["message_id"],
     )
 
 
@@ -205,6 +208,7 @@ def record_event(
     channel: str | None = None,
     detail: str = "",
     evidence_span: str | None = None,
+    message_id: str | None = None,
     occurred_at: datetime | None = None,
 ) -> LoopEvent:
     event = LoopEvent(
@@ -215,14 +219,21 @@ def record_event(
         channel=channel,
         detail=detail,
         evidence_span=evidence_span,
+        message_id=message_id,
     )
     with _connect() as conn:
         conn.execute(
-            "INSERT INTO events (id, loop_id, event_type, occurred_at, channel, detail, evidence_span) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO events (id, loop_id, event_type, occurred_at, channel, detail, evidence_span, message_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 event.id, event.loop_id, event.event_type.value, event.occurred_at.isoformat(),
-                event.channel, event.detail, event.evidence_span,
+                event.channel, event.detail, event.evidence_span, event.message_id,
             ),
         )
     return event
+
+
+def find_event_by_message_id(message_id: str) -> LoopEvent | None:
+    with _connect() as conn:
+        row = conn.execute("SELECT * FROM events WHERE message_id = ?", (message_id,)).fetchone()
+    return _row_to_event(row) if row else None
