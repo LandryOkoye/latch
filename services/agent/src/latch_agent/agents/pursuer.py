@@ -1,3 +1,5 @@
+import re
+
 from strands import Agent, tool
 from strands.models import BedrockModel
 
@@ -162,4 +164,21 @@ def pursue(loop_id: str) -> str:
     )
 
     result = agent(prompt)
-    return str(result)
+    return clean_agent_text(str(result))
+
+
+_THINKING_RE = re.compile(r"<thinking>.*?</thinking>", re.DOTALL)
+
+
+def clean_agent_text(text: str) -> str:
+    """Nova Pro emits <thinking> blocks inline and sometimes repeats its final
+    message verbatim after one; strip both so the explanation reads cleanly."""
+    lines = []
+    for line in _THINKING_RE.sub("\n", text).splitlines():
+        line = line.rstrip()
+        if line and line in lines:
+            continue
+        if not line and (not lines or not lines[-1]):
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()

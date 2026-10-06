@@ -7,7 +7,7 @@ from strands.models import BedrockModel
 from latch_core import config, ledger
 from latch_core.models import Loop, LoopEventType, LoopStatus, Verdict, VerdictType, WindowSource
 
-from latch_agent.tools import sheet_tools
+from latch_agent.tools import email_tools, ledger_tools, sheet_tools
 
 _SYSTEM_PROMPT = """You are the Adjudicator: you read a reply to a follow-up chase
 about an overdue commitment ("loop") and decide what the reply actually means.
@@ -21,8 +21,9 @@ Classify the reply into exactly one verdict:
   separately — you are only recognising that a completion claim was made.
 - DEFERRED: the reply makes a new promise without resolving the original one
   ("looking into it", "I'll have it by Friday instead", "still working on it").
-  If a new date is mentioned, extract it into new_commitment / new_due_at. If no
-  date is given, leave new_due_at unset.
+  If a new date is mentioned, extract it into new_commitment / new_due_at,
+  resolving relative dates ("next Wednesday", "Friday") against today's date as
+  given in the prompt. If no date is given, leave new_due_at unset.
 - TRANSFERRED: the reply says responsibility has moved to someone else ("I've
   forwarded this to Dana", "Sam handles this now"). Extract the new owner's name
   and email into new_owner_name / new_owner_email if given (email may be absent
@@ -45,7 +46,12 @@ def adjudicate(loop: Loop, reply_text: str) -> Verdict:
     model = BedrockModel(model_id=config.BEDROCK_MODEL_ID, region_name=config.AWS_REGION)
     agent = Agent(model=model, system_prompt=_SYSTEM_PROMPT)
 
+    today = datetime.now()
+    # The model is unreliable at weekday arithmetic, so give it a calendar to read.
+    calendar = ", ".join(f"{d:%A} {d:%Y-%m-%d}" for d in (today + timedelta(days=i) for i in range(1, 15)))
     prompt = (
+        f"Today's date: {today:%A, %Y-%m-%d}\n"
+        f"Upcoming dates (use these to resolve relative dates): {calendar}\n"
         f'Original commitment: "{loop.source_quote}"\n'
         f"Promise: {loop.promise}\n"
         f"Owner: {loop.owner_name} <{loop.owner_email}>\n"
@@ -143,14 +149,29 @@ def apply_verdict(loop_id: str, reply_text: str, verdict: Verdict) -> Loop:
 
     elif verdict.verdict == VerdictType.TRANSFERRED:
         new_owner_name = verdict.new_owner_name or loop.owner_name
-        new_owner_email = verdict.new_owner_email or loop.owner_email
         handoff_message = _draft_handoff_message(loop, new_owner_name)
-        ledger.update_loop(loop_id, owner_name=new_owner_name, owner_email=new_owner_email)
-        ledger.record_event(
-            loop_id, LoopEventType.TRANSFERRED,
-            evidence_span=verdict.evidence_span, reply_text=reply_text,
-            detail=f"handoff to {new_owner_name} <{new_owner_email}>: {handoff_message}",
-        )
+        if verdict.new_owner_email:
+            ledger.update_loop(loop_id, owner_name=new_owner_name, owner_email=verdict.new_owner_email)
+            ledger.record_event(
+                loop_id, LoopEventType.TRANSFERRED,
+                evidence_span=verdict.evidence_span, reply_text=reply_text,
+                detail=f"handoff to {new_owner_name} <{verdict.new_owner_email}>: {handoff_message}",
+            )
+            subject = f"Handoff: {loop.promise} [LATCH-{loop_id[:8]}]"
+            message_id = email_tools.send_email(to=verdict.new_owner_email, subject=subject, body=handoff_message)
+            ledger_tools.record_touch(loop_id, channel="email", detail=f"sent: {subject}", message_id=message_id)
+        else:
+            # No address for the new owner: a human has to supply one. Sending the
+            # handoff to the old owner's address would misdirect it.
+            ledger.update_loop(loop_id, owner_name=new_owner_name, status=LoopStatus.ESCALATED_TO_HUMAN)
+            ledger.record_event(
+                loop_id, LoopEventType.TRANSFERRED,
+                evidence_span=verdict.evidence_span, reply_text=reply_text,
+                detail=(
+                    f"handed to {new_owner_name}, but the reply gave no email address for them; "
+                    f"escalated so a human can supply it. Drafted handoff: {handoff_message}"
+                ),
+            )
 
     elif verdict.verdict == VerdictType.DISPUTED:
         ledger.update_loop(loop_id, status=LoopStatus.ESCALATED_TO_HUMAN)
