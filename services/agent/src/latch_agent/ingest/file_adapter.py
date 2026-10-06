@@ -29,7 +29,12 @@ class FileAdapter:
 
 
 def _parse_txt(path: Path) -> MeetingTranscript:
-    lines = path.read_text(encoding="utf-8").splitlines()
+    return parse_transcript_text(path.read_text(encoding="utf-8"), fallback_id=path.stem)
+
+
+def parse_transcript_text(text: str, fallback_id: str) -> MeetingTranscript:
+    """Parse the header + `[mm:ss] Speaker: text` transcript format."""
+    lines = text.splitlines()
 
     meeting_id = ""
     title = ""
@@ -80,8 +85,8 @@ def _parse_txt(path: Path) -> MeetingTranscript:
         )
 
     return MeetingTranscript(
-        meeting_id=meeting_id or path.stem,
-        title=title or path.stem,
+        meeting_id=meeting_id or fallback_id,
+        title=title or fallback_id,
         occurred_at=occurred_at,
         participants=participants,
         utterances=utterances,
