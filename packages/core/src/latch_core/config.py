@@ -21,6 +21,8 @@ IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_PORT = int(os.environ.get("IMAP_PORT", "993"))
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+# Spam is polled too: first-contact replies from a new counterparty often land there.
+IMAP_REPLY_FOLDERS = os.environ.get("IMAP_REPLY_FOLDERS", "INBOX,[Gmail]/Spam").split(",")
 
 GOOGLE_SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
 SHEET_ID = os.environ.get("SHEET_ID")
