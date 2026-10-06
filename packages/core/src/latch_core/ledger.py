@@ -195,6 +195,12 @@ def list_loops(status: LoopStatus | None = None) -> list[Loop]:
     return [_row_to_loop(r) for r in rows]
 
 
+def meeting_ingested(meeting_id: str) -> bool:
+    with _connect() as conn:
+        row = conn.execute("SELECT 1 FROM loops WHERE source_meeting_id = ? LIMIT 1", (meeting_id,)).fetchone()
+    return row is not None
+
+
 def fetch_children(loop_id: str) -> list[Loop]:
     with _connect() as conn:
         rows = conn.execute(

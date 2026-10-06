@@ -1,8 +1,12 @@
+import argparse
 import re
 from datetime import datetime
 from pathlib import Path
 
+from latch_core import ledger
 from latch_core.models import MeetingTranscript, Participant, Utterance
+
+from latch_agent.agents.extractor import extract_loops
 
 _HEADER_LINE_RE = re.compile(r"^([A-Z_]+):\s*(.*)$")
 _PARTICIPANT_RE = re.compile(r"^-\s*(.+?)\s*<(.+?)>\s*$")
@@ -147,3 +151,34 @@ def _parse_vtt(path: Path) -> MeetingTranscript:
         participants=participants,
         utterances=utterances,
     )
+
+
+def ingest(path: Path) -> dict[str, int | None]:
+    """Extract loops from one transcript file, or every .txt/.vtt in a directory,
+    into the ledger. Returns {meeting_id: loops_created}, with None for meetings
+    skipped because they were already ingested."""
+    files = sorted(p for p in path.iterdir() if p.suffix.lower() in {".txt", ".vtt"}) if path.is_dir() else [path]
+    ledger.init_db()
+    results: dict[str, int | None] = {}
+    for file in files:
+        transcript = FileAdapter(file).fetch()
+        if ledger.meeting_ingested(transcript.meeting_id):
+            results[transcript.meeting_id] = None
+            continue
+        loops = extract_loops(transcript)
+        for loop in loops:
+            ledger.create_loop(loop)
+        results[transcript.meeting_id] = len(loops)
+    return results
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Extract loops from meeting transcripts into the ledger.")
+    parser.add_argument("path", type=Path, help="a .txt/.vtt transcript, or a directory of them")
+    args = parser.parse_args()
+    for meeting_id, created in ingest(args.path).items():
+        print(f"{meeting_id}: " + ("already ingested, skipped" if created is None else f"{created} loop(s) extracted"))
+
+
+if __name__ == "__main__":
+    main()
