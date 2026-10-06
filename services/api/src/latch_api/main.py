@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from latch_core import ledger
 
-from latch_api.routes import loops, reliability
+from latch_api.routes import loops, meetings, reliability
 
 app = FastAPI(title="Latch API")
 
@@ -18,6 +18,7 @@ ledger.init_db()
 
 app.include_router(loops.router)
 app.include_router(reliability.router)
+app.include_router(meetings.router)
 
 
 @app.get("/api/health")

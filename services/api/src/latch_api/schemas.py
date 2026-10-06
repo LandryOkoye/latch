@@ -31,3 +31,9 @@ class ReliabilityRow(BaseModel):
 class PursueResult(BaseModel):
     result: str
     loop: Loop
+
+
+class IngestResult(BaseModel):
+    meeting_id: str
+    title: str
+    loops: list[Loop]

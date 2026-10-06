@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from latch_core import ledger, priority, reliability
-from latch_core.models import LoopStatus
+from latch_core.models import Loop, LoopStatus
 
 from latch_agent.agents.pursuer import draft_followup, pursue
 
@@ -29,6 +29,11 @@ def get_worklist() -> list[WorklistItem]:
         items.append(WorklistItem(loop=loop, priority_total=score["total"], priority_breakdown=score["breakdown"]))
     items.sort(key=lambda item: item.priority_total, reverse=True)
     return items
+
+
+@router.get("/loops", response_model=list[Loop])
+def get_loops() -> list[Loop]:
+    return ledger.list_loops()
 
 
 @router.get("/loops/{loop_id}", response_model=LoopDetail)
