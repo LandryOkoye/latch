@@ -10,8 +10,9 @@ dist/
 latch.db
 latch.db-wal
 latch.db-shm
-.streamlit/secrets.toml
 .bedrock_agentcore.yaml
 .bedrock_agentcore/
 *.log
 .DS_Store
+node_modules/
+apps/web/dist/

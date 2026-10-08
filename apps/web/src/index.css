@@ -1,0 +1,168 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/* Brand: Ink #0E0E0D · Paper #F6F5F1 · Signal #F0561D (Latch Logo v1.0).
+   Text pairs below were checked for >= 4.5:1; signal is only used as a
+   non-text accent (mark, active nav, focus ring) where 3:1 applies. */
+:root {
+  color-scheme: light;
+  --paper: #f6f5f1;
+  --surface: #ffffff;
+  --sunken: #efeee9;
+  --line: #e3e1da;
+  --line-strong: #cfccc3;
+  --ink: #0e0e0d;
+  --ink-2: #4a4844;
+  --ink-3: #6b6963;
+  --signal: #f0561d;
+  --signal-soft: #fdebe3;
+
+  --good: #1e7a34;
+  --good-soft: #eaf5ec;
+  --good-line: #cde7d2;
+  --info: #1f5fad;
+  --info-soft: #eaf1fb;
+  --info-line: #cfe0f6;
+  --warn: #8a5a00;
+  --warn-soft: #fbf3e1;
+  --warn-line: #f0ddb0;
+  --crit: #b42318;
+  --crit-soft: #fcecea;
+  --crit-line: #f4cfcb;
+
+  --highlight: #fce7a6;
+
+  /* Categorical chart slots 1-5, validated (dataviz validate_palette.js). */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #0e0e0d;
+    --surface: #171716;
+    --sunken: #1f1f1d;
+    --line: #2c2c29;
+    --line-strong: #3a3a36;
+    --ink: #f6f5f1;
+    --ink-2: #c9c7be;
+    --ink-3: #9b9990;
+    --signal: #f26a36;
+    --signal-soft: #2c1a12;
+
+    --good: #6ccb80;
+    --good-soft: #1a2a1c;
+    --good-line: #2a4a30;
+    --info: #7fb2f0;
+    --info-soft: #1a2433;
+    --info-line: #2b3f5c;
+    --warn: #e8b54a;
+    --warn-soft: #2a2414;
+    --warn-line: #4a3d1c;
+    --crit: #f08a80;
+    --crit-soft: #2e1a19;
+    --crit-line: #5a2b28;
+
+    --highlight: #5c4a12;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+  }
+}
+
+@theme inline {
+  --font-sans: "Geist Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-signal: var(--signal);
+  --color-signal-soft: var(--signal-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-good-line: var(--good-line);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-line: var(--warn-line);
+  --color-crit: var(--crit);
+  --color-crit-soft: var(--crit-soft);
+  --color-crit-line: var(--crit-line);
+  --color-highlight: var(--highlight);
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--signal-soft);
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
