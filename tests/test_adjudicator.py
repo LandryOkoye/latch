@@ -28,7 +28,7 @@ _CASE_LOOP = _LOOP.model_copy(
         "promise": "Get the client seen at the clinic",
         "source_quote": "I'll make sure the patient gets seen at the clinic before the 15th.",
         "owner_name": "Clinic Intake",
-        "owner_email": "intake@example-clinic.org",
+        "owner_email": "intake@clinic.example",
         "counterparty_org": "Example Clinic",
         "closure_criterion": "Client has been seen at the clinic",
     }

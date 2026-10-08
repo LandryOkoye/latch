@@ -2,9 +2,9 @@ MEETING_ID: 2026-09-01-acme-status-sync
 TITLE: Acme Outfitters Website Redesign — Status Sync
 OCCURRED_AT: 2026-09-01T10:00:00
 PARTICIPANTS:
-- Dana Kim <dana@fieldstonedigital.com>
-- Jordan Alvarez <jordan@brightpathdev.com>
-- Priya Shah <priya@acmeoutfitters.com>
+- Dana Kim <dana@fieldstonedigital.example>
+- Jordan Alvarez <jordan@brightpathdev.example>
+- Priya Shah <priya@acmeoutfitters.example>
 ---
 [00:00] Dana Kim: Thanks for hopping on — Marcus couldn't make it today, so it's just the three of us. Priya, quick one first — did those printed proofs ever show up?
 [00:13] Priya Shah: No, still nothing on our end. It's been a couple weeks now.

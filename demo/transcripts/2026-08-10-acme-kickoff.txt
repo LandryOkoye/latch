@@ -2,10 +2,10 @@ MEETING_ID: 2026-08-10-acme-kickoff
 TITLE: Acme Outfitters Website Redesign — Kickoff
 OCCURRED_AT: 2026-08-10T10:00:00
 PARTICIPANTS:
-- Dana Kim <dana@fieldstonedigital.com>
-- Marcus Lee <marcus@crestlineprint.com>
-- Jordan Alvarez <jordan@brightpathdev.com>
-- Priya Shah <priya@acmeoutfitters.com>
+- Dana Kim <dana@fieldstonedigital.example>
+- Marcus Lee <marcus@crestlineprint.example>
+- Jordan Alvarez <jordan@brightpathdev.example>
+- Priya Shah <priya@acmeoutfitters.example>
 ---
 [00:00] Dana Kim: Thanks everyone for hopping on. This is the kickoff for the Acme site redesign — I'll keep it quick since I know we're all juggling a few things. Priya, anything from your side before we dive in?
 [00:14] Priya Shah: Just that leadership is excited to see progress. We've got a board update in a few weeks, so anything visual helps.
