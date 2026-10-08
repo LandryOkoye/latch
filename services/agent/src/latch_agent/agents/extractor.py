@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
 from pydantic import BaseModel
@@ -83,8 +83,13 @@ def extract_loops(transcript: MeetingTranscript) -> list[Loop]:
     utterances_block = "\n".join(
         f"[{int(u.timestamp)}s] {u.speaker}: {u.text}" for u in transcript.utterances
     )
+    # The model is unreliable at weekday arithmetic, so give it a calendar to read.
+    calendar = ", ".join(
+        f"{d:%A} {d:%Y-%m-%d}" for d in (transcript.occurred_at + timedelta(days=i) for i in range(1, 15))
+    )
     prompt = (
-        f"Meeting date: {transcript.occurred_at.isoformat()}\n"
+        f"Meeting date: {transcript.occurred_at:%A} {transcript.occurred_at.isoformat()}\n"
+        f"Dates after the meeting (use these to resolve weekdays and relative dates): {calendar}\n"
         f"Participants:\n{participants_block}\n\n"
         f"Transcript:\n{utterances_block}"
     )
