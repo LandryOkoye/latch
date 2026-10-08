@@ -41,8 +41,8 @@
         └───────────────┬────────────────────────────────────┘
                         ▼
               ┌──────────────────────────────┐
-              │  STREAMLIT REVIEWER UI        │
+              │  FASTAPI + REACT WEB UI       │
               │  worklist (priority-ranked) · │
               │  loop detail & timeline ·     │
-              │  reliability board            │
+              │  reliability · new meeting    │
               └──────────────────────────────┘

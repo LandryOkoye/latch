@@ -1,4 +1,4 @@
-# Deployment deps for AgentCore only. Do NOT add Streamlit or reviewer-only deps here.
+# Deployment deps for AgentCore only. Do NOT add API or web-UI deps here.
 strands-agents
 strands-agents-tools
 boto3

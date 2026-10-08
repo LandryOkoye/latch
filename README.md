@@ -72,14 +72,14 @@ The same mechanic generalizes to any professional who spends their week making a
         └───────────────┬────────────────────────────────────┘
                         ▼
               ┌──────────────────────────────┐
-              │  STREAMLIT REVIEWER UI        │
+              │  FASTAPI + REACT WEB UI       │
               │  worklist (priority-ranked) · │
               │  loop detail & timeline ·     │
-              │  reliability board            │
+              │  reliability · new meeting    │
               └──────────────────────────────┘
 ```
 
-The domain model (`packages/core`), the agent runtime (`services/agent`), and the reviewer UI (`apps/reviewer`) share one definition of what a loop is, so the deployable agent runtime can ship to Bedrock AgentCore independently of the UI.
+The domain model (`packages/core`), the agent runtime (`services/agent`), the API (`services/api`), and the web UI (`apps/web`) share one definition of what a loop is, so the deployable agent runtime can ship to Bedrock AgentCore independently of the UI.
 
 ## The Adjudication Taxonomy
 
@@ -93,7 +93,7 @@ This is the core judgment call the whole system is built around — a reply is n
 | **DISPUTED** | The premise itself is rejected | Escalated to a human with the correction. Latch does not re-send the same chase against a disputed premise. |
 | **AMBIGUOUS** | Confidence is too low to classify safely | Escalated to a human with a drafted clarifying question. Latch never guesses. |
 
-Every verdict carries an `evidence_span` — the exact substring of the reply the decision rests on — surfaced directly in the reviewer UI, highlighted, next to the loop it resolved.
+Every verdict carries an `evidence_span` — the exact substring of the reply the decision rests on — surfaced directly in the web UI, highlighted inside the reply, next to the loop it resolved.
 
 ## Strands Agents Usage
 
@@ -109,21 +109,23 @@ Every verdict carries an `evidence_span` — the exact substring of the reply th
 
 ## Setup
 
-Requires Python 3.10+ and an AWS account with Bedrock model access enabled for Amazon Nova Pro in `us-east-1`.
+Requires Python 3.10+, Node 20+, and an AWS account with Bedrock model access enabled for Amazon Nova Pro in `us-east-1`.
 
 ```bash
 git clone <this-repo>
 cd latch
-make install              # venv + editable installs for all three packages
+make install              # venv + editable installs, plus the web UI's npm deps
 cp .env.example .env      # fill in: AWS credentials, a dedicated Gmail account +
                            # App Password, a Google service-account JSON + Sheet ID,
                            # optionally a Telegram bot token
 make seed                 # resets the ledger and loads a realistic, pre-aged worklist
-make ingest                # runs the FileAdapter over demo/transcripts to extract loops live
-make run-ui                # opens the Streamlit reviewer at localhost:8501
+make ingest                # extracts loops from demo/transcripts (skips meetings already ingested)
+make run-api               # FastAPI backend at localhost:8000
+make run-web               # React UI at localhost:5173
+make run-agent             # scheduler: adjudicates new replies, chases overdue loops
 ```
 
-Or run `make demo` to seed, ingest, and bring up the scheduler and UI together in one command.
+Or run `make demo` to seed, ingest, and bring up the scheduler, API, and UI together in one command.
 
 ## Roadmap
 

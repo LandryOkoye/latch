@@ -6,10 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # packages/core/src/latch_core/config.py -> repo root is 4 parents up. Anchoring
-# here (rather than leaving a relative path tied to the caller's cwd) matters
-# because apps/reviewer is launched with cwd=apps/reviewer (so its own
-# .streamlit/config.toml is discovered) while services/agent and the Makefile's
-# other targets run from the repo root — both must resolve to the same db file.
+# here keeps every process (API, scheduler, scripts, tests) on the same db file
+# regardless of the directory it was launched from.
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
