@@ -21,7 +21,10 @@ def _score(loop, reliability_stats: dict) -> dict:
 def get_worklist() -> list[WorklistItem]:
     all_loops = ledger.list_loops()
     reliability_stats = reliability.compute_reliability(all_loops)
-    active = [loop for loop in all_loops if loop.status not in _TERMINAL_STATUSES]
+    # A deferred loop is superseded by its newest child, which carries the live
+    # commitment; ranking the parent too would double-count it on its stale due date.
+    superseded = {loop.parent_id for loop in all_loops if loop.parent_id}
+    active = [loop for loop in all_loops if loop.status not in _TERMINAL_STATUSES and loop.id not in superseded]
 
     items = []
     for loop in active:
