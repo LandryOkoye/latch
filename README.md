@@ -2,6 +2,10 @@
 
 *An agent that owns the space between "I'll get back to you" and whether anyone ever did.*
 
+**Live demo:** https://la-f3588f9fd0eb4bcda2bba35020473684.ecs.us-east-1.on.aws
+
+To see the whole loop yourself: open **New meeting**, load the sample transcript, and put your own email next to the speaker who makes a promise. Extract it, open the loop, and press **Run Pursuer**. You'll get a real follow-up email. Reply to it however you like ("done", "next Thursday instead", "ask Dana, she owns this now"), and within a minute or two the loop shows what Latch decided your reply meant, with the exact words it relied on highlighted. The worklist is pre-seeded with two weeks of aged history so the reliability board has something to show; everything you do on top of it is live.
+
 ## The Problem
 
 Every organization runs on commitments that are made out loud and never written down anywhere that matters. A vendor says "I'll get the proofs to you by Friday." A teammate says "I'll send the revised timeline Monday." A client says "we'll circle back once finance has looked at it." Each of these is a real promise with a real deadline — and the moment the meeting ends, responsibility for tracking it evaporates. Nobody owns the space between the promise and its resolution.
@@ -81,6 +85,8 @@ The same mechanic generalizes to any professional who spends their week making a
 
 The domain model (`packages/core`), the agent runtime (`services/agent`), the API (`services/api`), and the web UI (`apps/web`) share one definition of what a loop is, so the deployable agent runtime can ship to Bedrock AgentCore independently of the UI.
 
+**In production**, every agent action runs on **Amazon Bedrock AgentCore Runtime**: extraction, pursuit, adjudication, and the scheduler's `tick` (check the inbox, judge new replies, chase what's overdue). The React UI and FastAPI backend run as one container on **Amazon ECS Express Mode** behind HTTPS. The API invokes AgentCore for agent work and triggers a tick every minute. Agents, API, and UI share one **DynamoDB** ledger, and credentials live in **AWS Secrets Manager**. Locally, the same code runs on SQLite with agents in-process.
+
 ## The Adjudication Taxonomy
 
 This is the core judgment call the whole system is built around — a reply is never just "done" or "not done":
@@ -105,7 +111,7 @@ Every verdict carries an `evidence_span` — the exact substring of the reply th
 | Model-driven tool selection | The Pursuer decides its own strategy per loop from state — no hard-coded escalation ladder |
 | Multi-agent composition | Extractor → ledger → Pursuer → Adjudicator, each with a distinct role, prompt, and failure mode |
 | State across turns | Touch count, deferral count, and channel history all feed back into what the Pursuer does next |
-| Amazon Bedrock AgentCore | The agent runtime is deployed and independently invocable |
+| Amazon Bedrock AgentCore | Every agent action in production (extract, pursue, adjudicate, scheduler tick) runs on AgentCore Runtime |
 
 ## Setup
 
@@ -127,10 +133,21 @@ make run-agent             # scheduler: adjudicates new replies, chases overdue 
 
 Or run `make demo` to seed, ingest, and bring up the scheduler, API, and UI together in one command.
 
+### Deploying to AWS
+
+```bash
+.venv/bin/python infra/deploy.py          # DynamoDB table, secret (from .env), IAM roles,
+                                          # image build in CodeBuild, ECS Express service
+agentcore deploy --env LATCH_DYNAMODB_TABLE=latch-ledger \
+                 --env LATCH_SECRET_ID=latch/prod --env AWS_REGION=us-east-1
+LATCH_DYNAMODB_TABLE=latch-ledger make seed   # load the demo worklist into production
+```
+
+`infra/deploy.py` is idempotent; re-run it to ship a new version of the web tier.
+
 ## Roadmap
 
 - **Live meeting ingestion** — join calls directly via a hosted meeting bot (the `AttendeeAdapter` slot already exists in the architecture; `FileAdapter` is the ingestion path used today).
-- **Public-hosted reviewer UI** as a standing live demo link, alongside the deployed AgentCore runtime.
 - **Telegram as an active second pursuit channel**, to fully exercise channel-switching once email has been tried without a reply.
 - **Richer reliability scoring** — trendlines per counterparty over time, not just a point-in-time snapshot.
 - **Multi-tenant support** for a team of coordinators sharing one reliability record across shared vendors.
