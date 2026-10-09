@@ -4,7 +4,7 @@ from strands import Agent, tool
 from strands.models import BedrockModel
 
 from latch_core import config, ledger
-from latch_core.models import LoopEventType, LoopStatus
+from latch_core.models import Loop, LoopEventType, LoopStatus
 
 from latch_agent.tools import email_tools, ledger_tools, sheet_tools, telegram_tools
 
@@ -15,8 +15,8 @@ each loop's specific history — there is no fixed script to run every time.
 General judgment, not a fixed ladder:
 - If nothing has been tried yet, first check for evidence the loop may already be
   resolved (the system-of-record sheet, then the inbox) before contacting anyone.
-- If no evidence of resolution turns up, draft a follow-up quoting the original
-  commitment and send it by email.
+- If no evidence of resolution turns up, send the follow-up email (send_email
+  writes it for you, quoting the original commitment).
 - If email has already been tried without a reply, consider switching channels
   (Telegram) rather than repeating the same thing — but if that channel isn't
   actually available, fall back sensibly instead of pretending it worked.
@@ -58,34 +58,42 @@ def check_inbox_for_evidence(loop_id: str) -> dict:
     return {"found": True, "latest": matches[0]}
 
 
-@tool
-def draft_followup(loop_id: str) -> str:
-    """Produce a ready-to-send follow-up message body for this loop, quoting the
-    original commitment so the recipient doesn't have to dig for context."""
-    loop = ledger.get_loop(loop_id)
-    if loop is None:
-        return ""
+def compose_followup(loop: Loop) -> str:
+    """The follow-up text, quoting the original commitment so the recipient
+    doesn't have to dig for context, and acknowledging earlier chases."""
+    earlier = (
+        f"I've followed up on this {loop.touch_count} time{'s' if loop.touch_count != 1 else ''} already. "
+        if loop.touch_count
+        else ""
+    )
     return (
         f"Hi {loop.owner_name},\n\n"
         f"Following up on this from our meeting:\n"
         f'"{loop.source_quote}"\n\n'
         f"This was expected by {loop.due_at:%B %d}, and I don't have confirmation "
-        f"it's been taken care of yet. Could you give me a quick update?\n\n"
+        f"it's been taken care of yet. {earlier}Could you give me a quick update?\n\n"
         f"Thanks."
     )
 
 
 @tool
-def send_email(loop_id: str, subject: str, body: str) -> str:
-    """Send a follow-up email to the loop's owner and record the touch. Returns
-    the sent Message-ID."""
+def draft_followup(loop_id: str) -> str:
+    """Preview the follow-up that send_email would send for this loop."""
+    loop = ledger.get_loop(loop_id)
+    return compose_followup(loop) if loop else ""
+
+
+@tool
+def send_email(loop_id: str) -> str:
+    """Email the loop's owner the follow-up (the text draft_followup previews)
+    and record the touch. Returns the sent Message-ID."""
     loop = ledger.get_loop(loop_id)
     if loop is None:
         raise ValueError(f"unknown loop {loop_id}")
-    token = f"[LATCH-{loop_id[:8]}]"
-    if token not in subject:
-        subject = f"{subject} {token}"
-    message_id = email_tools.send_email(to=loop.owner_email, subject=subject, body=body)
+    # The model chooses whether and when to chase; the wording is fixed, because
+    # left to write it the model sometimes sent placeholders or an empty body.
+    subject = f"Following up: {loop.promise} [LATCH-{loop_id[:8]}]"
+    message_id = email_tools.send_email(to=loop.owner_email, subject=subject, body=compose_followup(loop))
     ledger_tools.record_touch(loop_id, channel="email", detail=f"sent: {subject}", message_id=message_id)
     return message_id
 
