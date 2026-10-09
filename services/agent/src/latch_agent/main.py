@@ -3,6 +3,7 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from latch_core import ledger
 from latch_core.models import MeetingTranscript
 
+from latch_agent import scheduler
 from latch_agent.agents.adjudicator import adjudicate, apply_verdict
 from latch_agent.agents.extractor import extract_loops
 from latch_agent.agents.pursuer import pursue
@@ -13,9 +14,12 @@ app = BedrockAgentCoreApp()
 @app.entrypoint
 def invoke(payload: dict) -> dict:
     """Single AgentCore entrypoint for the deployed agent runtime. Dispatches
-    on payload['action']: 'extract' | 'pursue' | 'adjudicate'."""
+    on payload['action']: 'extract' | 'pursue' | 'adjudicate' | 'tick'."""
     ledger.init_db()
     action = payload.get("action")
+
+    if action == "tick":
+        return scheduler.tick()
 
     if action == "extract":
         transcript = MeetingTranscript(**payload["transcript"])
