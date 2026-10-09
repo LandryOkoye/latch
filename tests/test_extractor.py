@@ -42,11 +42,15 @@ def test_ingest_extracts_each_meeting_once(tmp_db, monkeypatch):
     assert len(ledger.list_loops()) == 3
 
 
-def test_extractor_resolves_weekdays_against_meeting_date():
+@pytest.mark.parametrize("line", [
+    "I'll get the printed banners delivered to your office by Thursday.",
+    "I'll send the signed quote by Thursday.",
+])
+def test_extractor_resolves_weekdays_against_meeting_date(line):
     """Live Bedrock: 'by Thursday' said on Saturday 2026-10-10 means Thursday 2026-10-15."""
     transcript = parse_transcript_text(
         "OCCURRED_AT: 2026-10-10T10:00:00\nPARTICIPANTS:\n- Tom Becker <tom@harborprint.example>\n---\n"
-        "[00:09] Tom Becker: I'll get the printed banners delivered to your office by Thursday.",
+        f"[00:09] Tom Becker: {line}",
         fallback_id="weekday-check",
     )
     [loop] = extract_loops(transcript)

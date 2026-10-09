@@ -80,6 +80,7 @@ class Verdict(BaseModel):
     new_owner_email: str | None = None
     new_commitment: str | None = None
     new_due_at: datetime | None = None
+    new_due_weekday: Literal["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] | None = None
 
 
 class Loop(BaseModel):

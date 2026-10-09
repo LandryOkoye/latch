@@ -9,6 +9,8 @@ from strands.models import BedrockModel
 from latch_core import config
 from latch_core.models import Loop, MeetingTranscript, WindowSource
 
+from latch_agent.agents.dates import Weekday, next_weekday
+
 
 class ExtractedLoop(BaseModel):
     promise: str
@@ -17,6 +19,7 @@ class ExtractedLoop(BaseModel):
     owner_email: str
     counterparty_org: str
     due_at: datetime
+    deadline_weekday: Weekday | None = None
     window_source: WindowSource
     closure_criterion: str
     stakes: Literal["low", "medium", "high"]
@@ -65,6 +68,9 @@ For each real loop, extract:
   the 21st"), resolve it against the meeting date given below. If no date was
   stated, this is an inferred window: pick a reasonable default (5 business days
   out from the meeting date) based on how the commitment was phrased.
+- deadline_weekday: when the deadline is named as a day of the week ("by
+  Thursday", "next Friday"), that day's name; otherwise null. The exact date is
+  computed from it.
 - window_source: "stated" if a date was explicitly mentioned in the transcript,
   "inferred" otherwise.
 - closure_criterion: what evidence would prove this loop closed (e.g. "revised
@@ -107,7 +113,13 @@ def extract_loops(transcript: MeetingTranscript) -> list[Loop]:
             owner_name=el.owner_name,
             owner_email=el.owner_email,
             counterparty_org=el.counterparty_org,
-            due_at=el.due_at,
+            # Trust the model's date when it already lands on the named weekday
+            # ("Friday the 21st"); otherwise its arithmetic slipped, so recompute.
+            due_at=(
+                next_weekday(transcript.occurred_at, el.deadline_weekday, el.due_at)
+                if el.deadline_weekday and f"{el.due_at:%A}" != el.deadline_weekday
+                else el.due_at
+            ),
             window_source=el.window_source,
             closure_criterion=el.closure_criterion,
             stakes=el.stakes,

@@ -7,6 +7,7 @@ from strands.models import BedrockModel
 from latch_core import config, ledger
 from latch_core.models import Loop, LoopEventType, LoopStatus, Verdict, VerdictType, WindowSource
 
+from latch_agent.agents.dates import next_weekday
 from latch_agent.tools import email_tools, ledger_tools, sheet_tools
 
 _SYSTEM_PROMPT = """You are the Adjudicator: you read a reply to a follow-up chase
@@ -23,7 +24,8 @@ Classify the reply into exactly one verdict:
   ("looking into it", "I'll have it by Friday instead", "still working on it").
   If a new date is mentioned, extract it into new_commitment / new_due_at,
   resolving relative dates ("next Wednesday", "Friday") against today's date as
-  given in the prompt. If no date is given, leave new_due_at unset.
+  given in the prompt. When the new date is named as a day of the week, also set
+  new_due_weekday to that day's name. If no date is given, leave both unset.
 - TRANSFERRED: the reply says responsibility has moved to someone else ("I've
   forwarded this to Dana", "Sam handles this now"). Extract the new owner's name
   and email into new_owner_name / new_owner_email if given (email may be absent
@@ -60,7 +62,11 @@ def adjudicate(loop: Loop, reply_text: str) -> Verdict:
         "Classify this reply."
     )
 
-    return agent.structured_output(Verdict, prompt)
+    verdict = agent.structured_output(Verdict, prompt)
+    if verdict.new_due_weekday:
+        at = verdict.new_due_at or today.replace(hour=17, minute=0, second=0, microsecond=0)
+        verdict.new_due_at = next_weekday(today, verdict.new_due_weekday, at)
+    return verdict
 
 
 _DEFAULT_DEFERRAL_DAYS = 5
