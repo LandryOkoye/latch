@@ -3,8 +3,10 @@ from fastapi import APIRouter, HTTPException
 from latch_core import ledger, priority, reliability
 from latch_core.models import Loop, LoopStatus
 
-from latch_agent.agents.pursuer import draft_followup, pursue
+from latch_agent.agents.pursuer import draft_followup
 
+from latch_api import agents
+from latch_api.limits import pursue_limit
 from latch_api.schemas import LoopDetail, PursueResult, WorklistItem
 
 router = APIRouter(prefix="/api", tags=["loops"])
@@ -74,6 +76,7 @@ def post_pursue(loop_id: str) -> PursueResult:
     loop = ledger.get_loop(loop_id)
     if loop is None:
         raise HTTPException(status_code=404, detail="loop not found")
-    result = pursue(loop_id)
+    pursue_limit.check()
+    result = agents.invoke({"action": "pursue", "loop_id": loop_id})["result"]
     updated = ledger.get_loop(loop_id)
     return PursueResult(result=result, loop=updated)
