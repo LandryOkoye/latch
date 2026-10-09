@@ -1,0 +1,13 @@
+.git
+.venv
+**/node_modules
+**/dist
+**/__pycache__
+**/*.egg-info
+.pytest_cache
+.env
+*.db
+*.db-wal
+*.db-shm
+BUILD_PLAN.md
+THESIS.md
