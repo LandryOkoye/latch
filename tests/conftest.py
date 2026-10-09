@@ -9,8 +9,12 @@ from latch_core.models import Loop, LoopStatus, WindowSource
 
 @pytest.fixture
 def tmp_db(tmp_path, monkeypatch):
+    """A fresh, empty ledger. With LATCH_DYNAMODB_TABLE set, the same tests run
+    against that (throwaway) DynamoDB table instead of a temp SQLite file."""
     monkeypatch.setattr(config, "DB_PATH", str(tmp_path / "test.db"))
     ledger.init_db()
+    if config.DYNAMODB_TABLE:
+        ledger.reset_db()
 
 
 def make_loop(**overrides) -> Loop:
